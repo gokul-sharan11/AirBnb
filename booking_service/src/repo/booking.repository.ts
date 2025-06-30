@@ -9,3 +9,13 @@ export async function createBooking(bookingInput : Prisma.BookingCreateInput) {
     });
     return booking;
 }
+
+export async function createIdempotencyKey(key : string) {
+    // create a new idempotency key
+    const idempotencyKey = await prismaClient.idempotencyKey.create({
+        data: {
+            idempotencyKey: uuidv4()
+        }
+    });
+    return idempotencyKey;
+}

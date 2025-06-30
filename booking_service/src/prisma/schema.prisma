@@ -26,7 +26,7 @@ model Booking {
   status        BookingStatus @default(PENDING)
   totalGuests   Int
   idempotencyKeyId Int? @unique
-  idempotentKey idempotencyKey?@relation(fields: [idempotencyKeyId], references: [id])
+  idempotentKey idempotencyKey?
 }
 
 model idempotencyKey {
@@ -34,7 +34,9 @@ model idempotencyKey {
   key         String   @unique //uuid
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now())
-  booking     Booking? 
+  bookingId   Int      @unique
+  finalized   Boolean  @default(false)
+  booking     Booking? @relation(fields : [bookingId], references: [id])
 }
 
 enum BookingStatus {
