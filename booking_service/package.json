@@ -12,6 +12,7 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.10.1",
+    "bullmq": "^5.56.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "prisma": "^6.10.1",
