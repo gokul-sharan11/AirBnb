@@ -6,6 +6,7 @@ import { appErrorHandler, genericErrorHandler } from './middlewares/error.middle
 import logger from './config/logger.config';
 import { attachCorrelationIdMiddleware } from './middlewares/correlation.middleware';
 import { setUpMailerWorker } from './processors/email.processor';
+import { addEmailToQueue } from './producers/email.producer';
 const app = express();
 
 app.use(express.json());
@@ -32,4 +33,13 @@ app.listen(serverConfig.PORT, () => {
     logger.info(`Press Ctrl+C to stop the server.`);
     setUpMailerWorker();
     logger.info("Mailer worker setup completed");
+    addEmailToQueue({
+        subject: "Test email",
+        to: "ss838@snu.edu.in",
+        templateId: "welcome",
+        params: {
+            name : "Soham",
+            appName : "Test App"
+        }
+    })
 });

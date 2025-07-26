@@ -3,6 +3,8 @@ import { NotificationDto } from "../dto/notification.dto";
 import { MAILER_QUEUE_NAME } from "../queues/mailer.queue";
 import { getRedisConnectionObject } from "../config/redis.config";
 import { MAILER_PAYLOAD } from "../producers/email.producer";
+import { templatesGenerator } from "../templates/templates.handler";
+import { sendMail } from "../service/mailer.service";
 
 export const setUpMailerWorker = () => {
     const emailProcessor = new Worker<NotificationDto>(
@@ -13,6 +15,8 @@ export const setUpMailerWorker = () => {
                 throw new Error("Invalid job name");
             }
             const payload = job.data;
+            const emailContent  = await templatesGenerator(payload.templateId, payload.params);
+            await sendMail(payload.subject, payload.to, emailContent);
             console.log(`Processing email for ${JSON.stringify(payload)}`);
         }, 
         // connection details
