@@ -8,7 +8,8 @@ import (
 
 type UserRepository interface {
 	GetByID() (*models.User, error)
-	CreateUser() (*models.User, error)
+	CreateUser(username string, email string, encryptedPassword string) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
 } 
 
 type UserRepositoryImpl struct {
@@ -54,10 +55,12 @@ func (repository *UserRepositoryImpl) GetByID() (*models.User, error) {
 }
 
 
-func (repository *UserRepositoryImpl) CreateUser() (*models.User, error) {
+func (repository *UserRepositoryImpl) CreateUser(username string, email string, encryptedPassword string) (*models.User, error) {
 	query := "INSERT INTO users (username, email, password) VALUES (?, ?, ?)"
 
-	result, err :=repository.db.Exec(query, "test", "test", "test")
+	fmt.Println("Encrpyted Pass : ", encryptedPassword)
+
+	result, err :=repository.db.Exec(query, username, email, encryptedPassword)
 
 	if err != nil {
 		fmt.Println("Error inserting user", err)
@@ -79,4 +82,31 @@ func (repository *UserRepositoryImpl) CreateUser() (*models.User, error) {
 	fmt.Println("User created successfully, rows affected", rowsAffected)
 	return nil, nil
 
+}
+
+func (repository *UserRepositoryImpl) GetUserByEmail(email string) (*models.User, error) {
+	query := "SELECT id, username, email, password FROM users WHERE email = ?"
+
+	result := repository.db.QueryRow(query, email)
+
+	user := models.User{}
+
+	err := result.Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			fmt.Println("User not found")
+			return nil, nil
+		}else{
+			fmt.Println("Error fetching user by ID", err)
+			return nil, err
+		}
+	}
+
+	return &user,nil
 }
