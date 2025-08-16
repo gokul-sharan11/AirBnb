@@ -2,7 +2,7 @@ package main
 
 import (
 	"auth_service/app"
-	"auth_service/config"
+	"auth_service/config/env"
 )
 
 func main() {

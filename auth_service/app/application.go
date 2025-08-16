@@ -5,9 +5,10 @@ import (
 	"time"
 	"fmt"
 	"auth_service/router"
-	"auth_service/db/repository"
+	repo "auth_service/db/repository"
 	"auth_service/controllers"
 	"auth_service/services"
+	dbConfig "auth_service/config/db"
 )
 
 type Config struct {
@@ -16,7 +17,6 @@ type Config struct {
 
 type Application struct {
 	Config Config 
-	Store db.Storage
 }
 
 func NewConfig(addr string) Config {
@@ -28,15 +28,21 @@ func NewConfig(addr string) Config {
 func NewApplication(config Config) *Application {
 	return &Application{
 		Config: config,
-		Store: *db.NewStorage(),
 	}
 }
 
 func (application *Application) Run () error {
-	db := db.NewUserRepository()
-	us := services.NewUserService(db)
+	db, err := dbConfig.SetupDB()
+
+	if err != nil {
+		fmt.Println("Error connecting to database", err)
+		return err
+	}
+
+	ur := repo.NewUserRepository(db)
+	us := services.NewUserService(ur)
 	uc := controllers.NewUserController(us)
-	uRouter := router.NewUserRouter(*uc)
+	uRouter := router.NewUserRouter(uc)
 	server := &http.Server{
 		Addr: application.Config.Addr,
 		Handler : router.SetupRouter(uRouter),

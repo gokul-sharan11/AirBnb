@@ -6,15 +6,16 @@ import (
 )
 
 type UserRouter struct {
-	userController controllers.UserController
+	userController *controllers.UserController
 }
 
-func NewUserRouter(_userController controllers.UserController) Router {
+func NewUserRouter(_userController *controllers.UserController) Router {
 	return &UserRouter{
 		userController: _userController,
 	}
 }
 
 func (u *UserRouter) Register(r chi.Router) {
-	r.Post("/register", u.userController.RegisterUser)
+	r.Get("/profile", u.userController.GetUserById)
+	r.Post("/register", u.userController.CreateUser)
 }
