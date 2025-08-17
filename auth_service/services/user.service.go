@@ -12,7 +12,7 @@ import (
 
 type UserService interface {
 	GetByID() (*models.User, error)
-	CreateUser() error
+	CreateUser(payload *dto.CreateUserRequestDTO) (*models.User, error)
 	LoginUser(payload *dto.LoginUserRequestDTO) (string, error)
 }
 
@@ -36,15 +36,20 @@ func (user *UserServiceImpl) GetByID() (*models.User, error) {
 	return userResult, nil
 }
 
-func (user *UserServiceImpl) CreateUser() error {
+func (user *UserServiceImpl) CreateUser(payload *dto.CreateUserRequestDTO) (*models.User, error) {
 	fmt.Println("Creating user")
-	encrpytedPassword, err := utils.HashPassword("test")
+	encrpytedPassword, err := utils.HashPassword(payload.Password)
 	if err != nil {
 		fmt.Println("Error hashing password", err)
-		return err
+		return nil, err
 	}
-	user.userRepository.CreateUser("user", "username@gamil.com", encrpytedPassword)
-	return nil
+
+	userResult, err := user.userRepository.CreateUser(payload.Username, payload.Email, encrpytedPassword)
+	if err != nil {
+		fmt.Println("Error creating user", err)
+		return nil, err
+	}
+	return userResult, nil
 }
 
 func (user *UserServiceImpl) LoginUser(payload *dto.LoginUserRequestDTO) (string,error) {

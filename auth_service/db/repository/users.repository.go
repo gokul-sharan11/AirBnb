@@ -10,6 +10,7 @@ type UserRepository interface {
 	GetByID() (*models.User, error)
 	CreateUser(username string, email string, encryptedPassword string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
+	GetAll() ([]*models.User, error)
 } 
 
 type UserRepositoryImpl struct {
@@ -20,6 +21,66 @@ func NewUserRepository (_db *sql.DB) UserRepository {
 	return &UserRepositoryImpl{
 		db : _db,
 	}
+}
+
+func (repository *UserRepositoryImpl) GetAll() ([]*models.User, error) {
+	query := "SELECT id, username, email, password, created_at, updated_at FROM users"
+
+	rows, err := repository.db.Query(query)
+
+	if err != nil {
+		fmt.Println("Error fetching users", err)
+		return nil, err
+	}
+
+	users := []*models.User{}
+
+	for rows.Next() {
+		user := &models.User{}
+		if err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.Password,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		) ; err != nil {
+			fmt.Println("Error scanning user", err)
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+
+func (repository *UserRepositoryImpl) DeleteByID(id int) error {
+	query := "DELETE FROM users WHERE id = ?"
+
+	result, err := repository.db.Exec(query, id)
+
+	if err != nil {
+		fmt.Println("Error deleting user by ID", err)
+		return err
+	}
+
+	rowsAffected, rowsErr := result.RowsAffected()
+
+	if rowsErr != nil {
+		fmt.Println("Error getting rows affected", rowsErr)
+		return rowsErr
+	}
+
+	if rowsAffected == 0 {
+		fmt.Println("No rows were affected, user not deleted")
+		return nil
+	}
+
+	fmt.Println("User deleted successfully, rows affected:", rowsAffected)
+	return nil
+
 }
 
 func (repository *UserRepositoryImpl) GetByID() (*models.User, error) {
@@ -68,6 +129,12 @@ func (repository *UserRepositoryImpl) CreateUser(username string, email string, 
 	}
 
 	rowsAffected, err := result.RowsAffected()
+	id, lastInsertIdErr := result.LastInsertId()
+
+	if lastInsertIdErr != nil {
+		fmt.Println("Error getting last insert id", lastInsertIdErr)
+		return nil, lastInsertIdErr
+	}
 
 	if(err != nil){
 		fmt.Println("Error geting rows affected", err)
@@ -80,7 +147,12 @@ func (repository *UserRepositoryImpl) CreateUser(username string, email string, 
 	}
 
 	fmt.Println("User created successfully, rows affected", rowsAffected)
-	return nil, nil
+	user := &models.User{
+		ID : id,
+		Username : username,
+		Email : email,
+	}
+	return user, nil
 
 }
 
