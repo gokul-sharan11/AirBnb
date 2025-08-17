@@ -7,12 +7,13 @@ import (
 	"fmt"
 	env "auth_service/config/env"
 	"github.com/golang-jwt/jwt/v4"
+	"auth_service/dto"
 )
 
 type UserService interface {
 	GetByID() (*models.User, error)
 	CreateUser() error
-	LoginUser() (string, error)
+	LoginUser(payload *dto.LoginUserRequestDTO) (string, error)
 }
 
 type UserServiceImpl struct {
@@ -46,9 +47,9 @@ func (user *UserServiceImpl) CreateUser() error {
 	return nil
 }
 
-func (user *UserServiceImpl) LoginUser() (string,error) {
+func (user *UserServiceImpl) LoginUser(payload *dto.LoginUserRequestDTO) (string,error) {
 	fmt.Println("Login process for a user")
-	userResult, err := user.userRepository.GetUserByEmail("username@gamil.com")
+	userResult, err := user.userRepository.GetUserByEmail(payload.Email)
 	if(err != nil){
 		fmt.Println("Error fetching user by email", err)
 		return "", err
@@ -57,18 +58,19 @@ func (user *UserServiceImpl) LoginUser() (string,error) {
 		fmt.Println("User not found")
 		return "", err
 	}
-	doesMatch := utils.CheckPasswordHash("test", userResult.Password)
+	doesMatch := utils.CheckPasswordHash(payload.Password, userResult.Password)
+	fmt.Println("Does Match : ", doesMatch)
 	if(!doesMatch){
 		fmt.Println("Password does not match")
 		return "", err
 	}
 
-	payload := jwt.MapClaims{
+	jwtPayload := jwt.MapClaims{
 		"email" : userResult.Email,
 		"id" : userResult.ID,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwtPayload)
 
 	tokenString, err := token.SignedString([]byte(env.GetString("JWT_SECRET", "secret")))
 	if err != nil {
