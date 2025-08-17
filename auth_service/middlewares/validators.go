@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"auth_service/dto"
 	"fmt"
+	"context"
 )
 
 func UserLoginRequestValidator(next http.Handler) http.Handler {
@@ -25,7 +26,9 @@ func UserLoginRequestValidator(next http.Handler) http.Handler {
 
 		fmt.Println("Payload received for login:", payload)
 
-		next.ServeHTTP(w, r) // Call the next handler in the chain
+		ctx := context.WithValue(r.Context(), "payload", payload) // existing context plus payload
+
+		next.ServeHTTP(w, r.WithContext(ctx)) // Call the next handler in the chain using the new context
 	})
 }
 
@@ -47,7 +50,9 @@ func UserCreateRequestValidator(next http.Handler) http.Handler {
 
 		fmt.Println("Payload received for login:", payload)
 
-		next.ServeHTTP(w, r) // Call the next handler in the chain
+		ctx := context.WithValue(r.Context(), "payload", payload) // existing context plus payload
+
+		next.ServeHTTP(w, r.WithContext(ctx)) // Call the next handler in the chain
 	})
 }
 
