@@ -19,8 +19,29 @@ func NewUserController(_userService services.UserService) *UserController {
 }
 
 func (u *UserController) GetUserById(w http.ResponseWriter, r *http.Request) {
-	u.userService.GetByID()
-	w.Write([]byte("User registered"))
+	userId := r.URL.Query().Get("id")
+	if userId == "" {
+		userId = r.Context().Value("userID").(string)
+	}
+
+	fmt.Println("Fetching user by ID")
+
+	if userId == "" {
+		utils.WriteJsonErrorResponse(w, http.StatusBadRequest, "User ID is required", nil)
+		return
+	}
+
+	user, err := u.userService.GetByID(userId)
+	if err != nil {
+		utils.WriteJsonErrorResponse(w, http.StatusInternalServerError, "Failed to fetch user", err)
+		return
+	}
+	if user == nil {
+		utils.WriteJsonErrorResponse(w, http.StatusNotFound, "User not found", nil)
+		return
+	}
+	utils.WriteJsonSuccessResponse(w, http.StatusOK, "User fetched successfully", user)
+	fmt.Println("User fetched successfully")
 }
 
 func (u *UserController) CreateUser(w http.ResponseWriter, r *http.Request) {

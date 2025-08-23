@@ -7,7 +7,7 @@ import (
 )
 
 type UserRepository interface {
-	GetByID() (*models.User, error)
+	GetByID(id string) (*models.User, error)
 	CreateUser(username string, email string, encryptedPassword string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
 	GetAll() ([]*models.User, error)
@@ -83,12 +83,12 @@ func (repository *UserRepositoryImpl) DeleteByID(id int) error {
 
 }
 
-func (repository *UserRepositoryImpl) GetByID() (*models.User, error) {
+func (repository *UserRepositoryImpl) GetByID(id string) (*models.User, error) {
 	fmt.Println("Fetching user by ID")
 
 	query := "SELECT id, username, email, password, created_at, updated_at FROM users WHERE id = ?"
 
-	rowSet := repository.db.QueryRow(query, 1)
+	rowSet := repository.db.QueryRow(query, id)
 
 	user := &models.User{}
 
